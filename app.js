@@ -3,6 +3,7 @@ import { KeyboardInput } from './js/keyboard.js';
 import { detectTriad, ArpeggioDetector, PITCH_NAMES } from './js/music.js';
 import { AbstractViz } from './js/abstract.js';
 import { PaintingGallery, moodLabel } from './js/paintings.js';
+import { Synth } from './js/synth.js';
 
 const TRIAD_HOLD_MS = 220;   // hold a triad this long before committing
 const TRIAD_COOLDOWN_MS = 700; // don't re-trigger the same chord quicker than this
@@ -12,6 +13,8 @@ const modeBtn = document.getElementById('mode-toggle');
 const modeLabel = modeBtn.querySelector('.label');
 const statusEl = document.getElementById('status');
 const connectBtn = document.getElementById('connect-btn');
+const muteBtn = document.getElementById('mute-btn');
+const muteLabel = muteBtn.querySelector('.label');
 const helpBtn = document.getElementById('help-toggle');
 const helpEl = document.getElementById('help');
 const paintingLayer = document.getElementById('painting-layer');
@@ -30,6 +33,10 @@ const state = {
 const viz = new AbstractViz(canvas);
 const gallery = new PaintingGallery();
 const arp = new ArpeggioDetector();
+const synth = new Synth();
+
+// Call on any user gesture so iOS/iPadOS Safari unlocks audio.
+function unlockAudio() { synth.ensure().catch(() => {}); }
 
 // ---------- Status indicator ----------
 // Base shows MIDI connection state; `override` temporarily replaces it
@@ -98,6 +105,7 @@ function onNote(kind, note, velocity) {
   const now = performance.now();
   if (kind === 'on') {
     state.active.set(note, velocity);
+    synth.noteOn(note, velocity);
     viz.noteOn(note, velocity);
     arp.push(note, now);
     const a = arp.detect(now);
@@ -105,6 +113,7 @@ function onNote(kind, note, velocity) {
     maybeCommitTriad(now);
   } else {
     state.active.delete(note);
+    synth.noteOff(note);
     viz.noteOff(note);
     // If a chord breaks apart, clear pending so we don't commit a stale read
     if (state.active.size < 3) state.pendingTriad = null;
@@ -177,7 +186,20 @@ function setMode(mode) {
 }
 
 modeBtn.addEventListener('click', () => {
+  unlockAudio();
   setMode(state.mode === 'abstract' ? 'painting' : 'abstract');
+});
+
+// ---------- Mute ----------
+
+function setMuted(muted) {
+  synth.setMuted(muted);
+  muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+  muteLabel.textContent = muted ? 'Muted' : 'Sound';
+}
+muteBtn.addEventListener('click', () => {
+  unlockAudio();
+  setMuted(muteBtn.getAttribute('aria-pressed') !== 'true');
 });
 
 // ---------- Help ----------
@@ -193,7 +215,8 @@ window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.key === '?' || (e.key === '/' && e.shiftKey)) { toggleHelp(); e.preventDefault(); }
   else if (e.key === 'Escape') toggleHelp(false);
-  else if (e.key === ' ') { setMode(state.mode === 'abstract' ? 'painting' : 'abstract'); e.preventDefault(); }
+  else if (e.key === ' ') { unlockAudio(); setMode(state.mode === 'abstract' ? 'painting' : 'abstract'); e.preventDefault(); }
+  else if (e.key === 'm' || e.key === 'M') { unlockAudio(); setMuted(muteBtn.getAttribute('aria-pressed') !== 'true'); }
 });
 
 // ---------- Render loop ----------
@@ -208,19 +231,39 @@ requestAnimationFrame(tick);
 
 const midi = new MidiInput(onNote);
 
-function applyDeviceList(devices) {
-  if (devices.length > 0) {
-    setMidiStatus(`Piano connected · ${devices.join(', ')}`, 'ok');
+function isIpadSafari() {
+  const ua = navigator.userAgent;
+  const ipadOS = /iPad|iPhone/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  return ipadOS && safari;
+}
+
+function applyDeviceList(snap) {
+  const { devices, connected } = snap;
+  if (connected.length > 0) {
+    const names = connected.map(d => d.name).join(', ');
+    setMidiStatus(`Piano connected · ${names}`, 'ok');
     updateConnectBtn(true);
+  } else if (devices.length > 0) {
+    // Device known but state !== 'connected' — likely unplugged or pending
+    setMidiStatus(`${devices.length} MIDI device(s) present but disconnected — check cable/power`, 'warn');
+    updateConnectBtn(false);
   } else {
-    setMidiStatus('No MIDI device — QWERTY fallback active', 'warn');
+    const tip = isIpadSafari()
+      ? ' — plug piano in, tap Connect MIDI, then Allow'
+      : ' — QWERTY fallback active';
+    setMidiStatus(`No MIDI device detected${tip}`, 'warn');
     updateConnectBtn(false);
   }
 }
 
 async function connectMidi() {
+  unlockAudio();
   if (!navigator.requestMIDIAccess) {
-    setMidiStatus('Web MIDI not supported (use Safari 18+, Chrome, or Edge)', 'err');
+    const tip = isIpadSafari()
+      ? ' — enable Settings → Safari → Advanced → Feature Flags → Web MIDI API, then reload'
+      : ' — use Chrome, Edge, or Safari 18+';
+    setMidiStatus(`Web MIDI not available in this browser${tip}`, 'err');
     updateConnectBtn(false);
     connectBtn.disabled = true;
     return;
@@ -229,9 +272,14 @@ async function connectMidi() {
   try {
     await midi.init(applyDeviceList);
   } catch (e) {
-    setMidiStatus(`MIDI blocked: ${e.message}`, 'err');
+    console.error('[midi] init failed:', e);
+    const name = e.name || 'Error';
+    let hint = '';
+    if (name === 'SecurityError') hint = ' — page must be served over HTTPS';
+    else if (name === 'NotAllowedError') hint = ' — permission denied; tap Connect MIDI and Allow';
+    else if (name === 'NotSupportedError') hint = ' — browser does not support Web MIDI';
+    setMidiStatus(`${name}: ${e.message || 'unknown'}${hint}`, 'err');
     updateConnectBtn(false);
-    console.error(e);
   }
 }
 

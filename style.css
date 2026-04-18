@@ -173,6 +173,22 @@ html, body {
 #connect-btn { display: none; }
 #connect-btn.visible { display: inline-flex; }
 
+#mute-btn .icon {
+  display: inline-block;
+  width: 12px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1;
+}
+#mute-btn[aria-pressed="true"] {
+  color: var(--muted);
+  border-color: rgba(255,255,255,0.05);
+}
+#mute-btn[aria-pressed="true"] .icon {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
 #help {
   position: fixed;
   inset: 0;

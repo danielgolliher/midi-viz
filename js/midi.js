@@ -1,34 +1,54 @@
-// Thin Web MIDI wrapper. Calls onEvent('on'|'off', note, velocity).
+// Web MIDI wrapper. Calls onEvent('on'|'off', note, velocity).
+// On status change, reports full device list so the UI can reason about
+// what's connected vs. merely present-but-disconnected.
 export class MidiInput {
   constructor(onEvent) {
     this.onEvent = onEvent;
     this.access = null;
-    this.deviceNames = new Set();
+    this.devices = []; // [{id, name, manufacturer, state, connection}]
   }
 
   async init(onStatusChange) {
     if (!navigator.requestMIDIAccess) {
-      throw new Error('Web MIDI API not supported in this browser (try Chrome or Edge).');
+      const err = new Error('Web MIDI not available in this browser');
+      err.name = 'NotSupportedError';
+      throw err;
     }
     this.access = await navigator.requestMIDIAccess({ sysex: false });
     this.bindAllInputs();
-    this.access.onstatechange = () => {
+
+    this.access.onstatechange = (e) => {
       this.bindAllInputs();
-      onStatusChange && onStatusChange(this.listDevices());
+      console.log('[midi] statechange:', e.port && {
+        name: e.port.name, state: e.port.state, connection: e.port.connection,
+        type: e.port.type, manufacturer: e.port.manufacturer,
+      });
+      onStatusChange && onStatusChange(this.snapshot());
     };
-    onStatusChange && onStatusChange(this.listDevices());
+
+    onStatusChange && onStatusChange(this.snapshot());
   }
 
   bindAllInputs() {
-    this.deviceNames.clear();
+    this.devices = [];
     for (const input of this.access.inputs.values()) {
       input.onmidimessage = (e) => this.handle(e);
-      this.deviceNames.add(input.name || 'MIDI device');
+      this.devices.push({
+        id: input.id,
+        name: input.name || 'MIDI device',
+        manufacturer: input.manufacturer || '',
+        state: input.state,        // 'connected' | 'disconnected'
+        connection: input.connection, // 'open' | 'closed' | 'pending'
+      });
     }
+    console.log('[midi] inputs:', this.devices);
   }
 
-  listDevices() {
-    return [...this.deviceNames];
+  snapshot() {
+    return {
+      devices: this.devices.slice(),
+      connected: this.devices.filter(d => d.state === 'connected'),
+    };
   }
 
   handle(event) {

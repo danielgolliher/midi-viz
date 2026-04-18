@@ -21,6 +21,10 @@
   <div id="ui">
     <button id="connect-btn" type="button">Connect MIDI</button>
     <div id="status" role="status" aria-live="polite">Detecting MIDI…</div>
+    <button id="mute-btn" type="button" aria-pressed="false" title="Mute sound (M)">
+      <span class="icon" aria-hidden="true">&#9834;</span>
+      <span class="label">Sound</span>
+    </button>
     <button id="mode-toggle" type="button" aria-pressed="false">
       <span class="dot"></span>
       <span class="label">Abstract</span>
@@ -39,10 +43,11 @@
         <li><strong>Diminished</strong> — tense, unresolved: storms and shipwrecks (Homer, Ryder, Allston).</li>
         <li><strong>Augmented</strong> — dreamlike, suspended: symbolists and allegorists (Cole, Vedder, Blakelock, La Farge).</li>
       </ul>
-      <p><strong>Controls:</strong> click the toggle to switch modes. Press <kbd>Space</kbd> to toggle, <kbd>?</kbd> for this help, <kbd>Esc</kbd> to close.</p>
+      <p><strong>Controls:</strong> click the toggle to switch modes. Press <kbd>Space</kbd> to toggle, <kbd>M</kbd> to mute sound, <kbd>?</kbd> for this help, <kbd>Esc</kbd> to close.</p>
+      <p><strong>Sound:</strong> the browser plays each note with a soft synth — useful for silent MIDI controllers. Tap <strong>Sound / Muted</strong> (or press <kbd>M</kbd>) to toggle. If your piano already plays its own sound, mute this.</p>
       <p><strong>No MIDI piano handy?</strong> Use your QWERTY keyboard. White keys: <kbd>A S D F G H J K L ;</kbd>. Black keys: <kbd>W E &nbsp; T Y U &nbsp; O P</kbd>. <kbd>Z</kbd>/<kbd>X</kbd> shift octave.</p>
       <p class="faint">Paintings load once from the Met Museum Open Access API and are cached in your browser. First switch into Painting mode may take a few seconds.</p>
-      <p class="faint">On iPad: Safari 18 or newer has Web MIDI. If the indicator stays red/amber after plugging in, tap <strong>Connect MIDI</strong> to grant permission (some browsers require a user gesture).</p>
+      <p class="faint">On iPad: Safari needs Web MIDI to be enabled. iPadOS 18+ has it by default; older Safari may require <em>Settings → Safari → Advanced → Feature Flags → Web MIDI API</em>. After plugging in the piano, tap <strong>Connect MIDI</strong> and <em>Allow</em> when prompted. If nothing appears: the status pill shows the detected device count and any error name — check the browser console for a detailed device list.</p>
     </div>
   </div>
 
