@@ -2,7 +2,7 @@
 // https://metmuseum.github.io/  — public domain works only.
 
 const MET_API = 'https://collectionapi.metmuseum.org/public/collection/v1';
-const CACHE_KEY = 'midi-viz-paintings-v2';
+const CACHE_KEY = 'midi-viz-paintings-v3';
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
 // Artists grouped by the mood their best-known work evokes.
@@ -96,12 +96,21 @@ export class PaintingGallery {
       fetch(`${MET_API}/objects/${id}`).then(r => r.ok ? r.json() : null).catch(() => null)
     ));
 
+    const lastName = artist.split(' ').pop().toLowerCase();
+    // Met's `classification` field is empty for most painting records, so we
+    // can't rely on it. Instead, keep anything with a public-domain primary
+    // image whose artist name actually matches, and prefer oil/canvas media
+    // when available. Non-painting media (engraving, drawing) still land in
+    // the pool but are visually on-theme for these artists.
     return objs
       .filter(o => o
         && o.isPublicDomain
         && o.primaryImage
-        && /painting/i.test(o.classification || '')
-        && (o.artistDisplayName || '').toLowerCase().includes(artist.split(' ').pop().toLowerCase()))
+        && (o.artistDisplayName || '').toLowerCase().includes(lastName))
+      .sort((a, b) => {
+        const score = (o) => /oil|canvas|panel/i.test(o.medium || '') ? 0 : 1;
+        return score(a) - score(b);
+      })
       .slice(0, MAX_PER_ARTIST)
       .map(o => ({
         url: o.primaryImage,
