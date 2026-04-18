@@ -198,6 +198,9 @@ html, body {
 }
 .help-inner p { margin: 0 0 12px; }
 .help-inner .faint { color: var(--muted); font-size: 12px; }
+.mood-key { margin: 0 0 12px; padding-left: 18px; }
+.mood-key li { margin-bottom: 4px; }
+.mood-key strong { color: var(--accent); font-weight: 600; }
 kbd {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 11px;

@@ -2,34 +2,49 @@
 // https://metmuseum.github.io/  — public domain works only.
 
 const MET_API = 'https://collectionapi.metmuseum.org/public/collection/v1';
-const CACHE_KEY = 'midi-viz-paintings-v3';
+const CACHE_KEY = 'midi-viz-paintings-v4';
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
-// Artists grouped by the mood their best-known work evokes.
+// Artists grouped by the mood their best-known work evokes, matched to
+// the emotional character musicians hear in each triad quality.
 const MOOD_ARTISTS = {
-  major: [       // luminous, triumphant, grand — Hudson River / Luminism
+  // Major: bright, stable, resolved, affirmative.
+  //   Hudson River luminists — open light, calm grandeur, harmonic resolution.
+  major: [
     'Frederic Edwin Church',
     'Albert Bierstadt',
     'Thomas Moran',
     'John Frederick Kensett',
     'Fitz Henry Lane',
+    'Martin Johnson Heade',
+    'Sanford Robinson Gifford',
+    'Asher Brown Durand',
   ],
-  minor: [       // tonalist, pensive, nocturnal
+  // Minor: pensive, melancholy, reflective, yearning.
+  //   Tonalists — muted palette, soft edges, quiet sorrow.
+  minor: [
     'George Inness',
     'James McNeill Whistler',
     'Dwight William Tryon',
     'John Henry Twachtman',
+    'Henry Ossawa Tanner',
   ],
-  diminished: [  // stormy, ominous, unresolved
-    'Albert Pinkham Ryder',
+  // Diminished: tense, unstable, unresolved, foreboding.
+  //   Storms and shipwrecks — turbulent seas, thwarted rescue, dread.
+  diminished: [
     'Winslow Homer',
+    'Albert Pinkham Ryder',
     'Washington Allston',
+    'Thomas Birch',
   ],
-  augmented: [   // sublime, dreamlike, allegorical
-    'Thomas Cole',
-    'Martin Johnson Heade',
-    'Sanford Robinson Gifford',
+  // Augmented: dreamlike, suspended, ambiguous, uncanny.
+  //   Allegorists and symbolists — moonlit reveries, mythic narratives.
+  augmented: [
+    'Thomas Cole',              // Voyage of Life, Course of Empire
     'Elihu Vedder',
+    'Ralph Albert Blakelock',
+    'John La Farge',
+    'George Inness',            // his late visionary tonalist work
   ],
 };
 
@@ -153,12 +168,13 @@ export class PaintingGallery {
   }
 }
 
-// Human-readable mood label for captioning
+// Musical character of each triad quality, used in the caption.
+// Phrased the way musicians usually describe them.
 export function moodLabel(quality) {
   return {
-    major: 'luminous',
-    minor: 'tonalist',
-    diminished: 'stormy',
-    augmented: 'sublime',
+    major:      'bright · resolved',
+    minor:      'pensive · melancholy',
+    diminished: 'tense · unresolved',
+    augmented:  'dreamlike · suspended',
   }[quality] || quality;
 }
