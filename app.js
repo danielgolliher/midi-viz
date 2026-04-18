@@ -16,6 +16,8 @@ const statusEl = document.getElementById('status');
 const connectBtn = document.getElementById('connect-btn');
 const muteBtn = document.getElementById('mute-btn');
 const muteLabel = muteBtn.querySelector('.label');
+const voiceBtn = document.getElementById('voice-btn');
+const voiceLabel = voiceBtn.querySelector('.label');
 const helpBtn = document.getElementById('help-toggle');
 const helpEl = document.getElementById('help');
 const paintingLayer = document.getElementById('painting-layer');
@@ -278,6 +280,32 @@ muteBtn.addEventListener('click', () => {
   setMuted(muteBtn.getAttribute('aria-pressed') !== 'true');
 });
 
+// ---------- Voice cycler ----------
+
+const VOICE_STORAGE_KEY = 'midi-viz-voice';
+const voiceList = synth.voices();
+let voiceIdx = 0;
+
+function setVoiceByIndex(i) {
+  voiceIdx = ((i % voiceList.length) + voiceList.length) % voiceList.length;
+  const v = voiceList[voiceIdx];
+  synth.setVoice(v.key);
+  voiceLabel.textContent = v.name;
+  try { localStorage.setItem(VOICE_STORAGE_KEY, v.key); } catch {}
+}
+
+// Restore saved voice if present.
+{
+  const saved = (() => { try { return localStorage.getItem(VOICE_STORAGE_KEY); } catch { return null; } })();
+  const found = saved ? voiceList.findIndex(v => v.key === saved) : -1;
+  setVoiceByIndex(found >= 0 ? found : 0);
+}
+
+voiceBtn.addEventListener('click', () => {
+  unlockAudio();
+  setVoiceByIndex(voiceIdx + 1);
+});
+
 // ---------- Help ----------
 
 function toggleHelp(force) {
@@ -293,6 +321,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 'Escape') toggleHelp(false);
   else if (e.key === ' ') { unlockAudio(); setMode(state.mode === 'abstract' ? 'painting' : 'abstract'); e.preventDefault(); }
   else if (e.key === 'm' || e.key === 'M') { unlockAudio(); setMuted(muteBtn.getAttribute('aria-pressed') !== 'true'); }
+  else if (e.key === 'v' || e.key === 'V') { unlockAudio(); setVoiceByIndex(voiceIdx + 1); }
 });
 
 // ---------- Render loop ----------

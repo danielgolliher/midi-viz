@@ -189,6 +189,9 @@ html, body {
   text-decoration: line-through;
 }
 
+#voice-btn .prefix { color: var(--muted); }
+#voice-btn .label { color: var(--fg); }
+
 #help {
   position: fixed;
   inset: 0;
