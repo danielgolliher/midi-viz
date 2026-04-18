@@ -43,6 +43,7 @@ const synth = new Synth();
 
 // Load the Three.js visual engine in the background. MIDI will already
 // be running by the time this resolves.
+let vizFailed = null;
 (async () => {
   try {
     const { AbstractViz } = await import('./js/abstract.js');
@@ -50,8 +51,9 @@ const synth = new Synth();
     console.log('[viz] Three.js engine ready');
   } catch (e) {
     console.error('[viz] failed to load:', e);
-    setOverride('Visuals unavailable — MIDI still works. See console.', 'warn');
-    setTimeout(() => setOverride(null), 5000);
+    vizFailed = e;
+    // Keep the message up indefinitely so a real failure is visible.
+    setTimeout(() => setOverride(`Visuals failed: ${e.name || 'Error'} — see console`, 'err'), 50);
   }
 })();
 
