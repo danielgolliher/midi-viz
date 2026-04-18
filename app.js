@@ -41,23 +41,36 @@ const gallery = new PaintingGallery();
 const arp = new ArpeggioDetector();
 const synth = new Synth();
 
-// Load the Three.js visual engine in the background. MIDI will already
-// be running by the time this resolves.
+// Load the visual engine in the background. MIDI will already be running
+// by the time this resolves. Try the Three.js/WebGL engine first; if
+// WebGL is unavailable (hardware acceleration off, privacy extension,
+// driver issue), fall back to a Canvas 2D renderer.
 let vizFailed = null;
 (async () => {
   try {
     const { AbstractViz } = await import('./js/abstract.js');
     viz = new AbstractViz(canvas);
     console.log('[viz] Three.js engine ready');
-  } catch (e) {
-    console.error('[viz] failed to load:', e, e && e.stack);
-    vizFailed = e;
-    const message = (e && (e.message || e.toString())) || 'unknown error';
-    const firstLine = String(message).split('\n')[0].slice(0, 180);
-    setTimeout(() => {
-      setOverride(`Visuals: ${firstLine}`, 'err');
-      showVizErrorPanel(e);
-    }, 50);
+    return;
+  } catch (webglErr) {
+    console.warn('[viz] WebGL engine failed, falling back to Canvas 2D:', webglErr);
+    try {
+      const { AbstractViz } = await import('./js/abstract-2d.js');
+      viz = new AbstractViz(canvas);
+      console.log('[viz] Canvas 2D fallback ready');
+      setOverride('Visuals: WebGL unavailable, using 2D fallback', 'warn');
+      setTimeout(() => setOverride(null), 6000);
+      return;
+    } catch (fallbackErr) {
+      console.error('[viz] both WebGL and Canvas 2D failed:', fallbackErr);
+      vizFailed = fallbackErr;
+      const message = (fallbackErr && (fallbackErr.message || fallbackErr.toString())) || 'unknown';
+      const firstLine = String(message).split('\n')[0].slice(0, 180);
+      setTimeout(() => {
+        setOverride(`Visuals: ${firstLine}`, 'err');
+        showVizErrorPanel(fallbackErr);
+      }, 50);
+    }
   }
 })();
 

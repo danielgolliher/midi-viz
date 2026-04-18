@@ -53,9 +53,22 @@ export class AbstractViz {
   constructor(canvas) {
     this.canvas = canvas;
 
-    this.renderer = new THREE.WebGLRenderer({
-      canvas, antialias: false, alpha: false, powerPreference: 'high-performance',
-    });
+    // Try the cleanest possible renderer first; drop options only if
+    // they've been known to break specific drivers. `powerPreference`
+    // and `alpha: false` can fail context creation on some dual-GPU
+    // laptops and privacy-focused browsers.
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    } catch (e) {
+      // As a last resort, let Three.js make its own canvas and attach
+      // it in place of the original.
+      console.warn('[viz] WebGLRenderer on supplied canvas failed, trying fresh canvas:', e);
+      renderer = new THREE.WebGLRenderer({ antialias: false });
+      canvas.parentNode.replaceChild(renderer.domElement, canvas);
+      renderer.domElement.id = 'viz';
+    }
+    this.renderer = renderer;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setClearColor(0x06060c, 1);
 
