@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIDI Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="viz"></canvas>
+
+  <div id="painting-layer" aria-hidden="true">
+    <img id="painting-img" alt="">
+    <div id="painting-caption">
+      <div class="pc-title"></div>
+      <div class="pc-meta"></div>
+      <div class="pc-chord"></div>
+    </div>
+  </div>
+
+  <div id="ui">
+    <button id="connect-btn" type="button">Connect MIDI</button>
+    <div id="status" role="status" aria-live="polite">Detecting MIDI…</div>
+    <button id="mode-toggle" type="button" aria-pressed="false">
+      <span class="dot"></span>
+      <span class="label">Abstract</span>
+    </button>
+    <button id="help-toggle" type="button" title="Help (press ?)">?</button>
+  </div>
+
+  <div id="help" hidden>
+    <div class="help-inner">
+      <h1>MIDI Visualizer</h1>
+      <p><strong>Abstract mode:</strong> every note blooms. Triads spawn geometric bursts; arpeggios leave flowing trails. Color follows the circle of fifths.</p>
+      <p><strong>Painting mode:</strong> hold a triad and a matching public-domain American / classical painting (Met Open Access) fades in. Major &rarr; luminous landscape. Minor &rarr; tonalist / nocturne. Diminished &rarr; stormy. Augmented &rarr; sublime.</p>
+      <p><strong>Controls:</strong> click the toggle to switch modes. Press <kbd>Space</kbd> to toggle, <kbd>?</kbd> for this help, <kbd>Esc</kbd> to close.</p>
+      <p><strong>No MIDI piano handy?</strong> Use your QWERTY keyboard. White keys: <kbd>A S D F G H J K L ;</kbd>. Black keys: <kbd>W E &nbsp; T Y U &nbsp; O P</kbd>. <kbd>Z</kbd>/<kbd>X</kbd> shift octave.</p>
+      <p class="faint">Paintings load once from the Met Museum Open Access API and are cached in your browser. First switch into Painting mode may take a few seconds.</p>
+      <p class="faint">On iPad: Safari 18 or newer has Web MIDI. If the indicator stays red/amber after plugging in, tap <strong>Connect MIDI</strong> to grant permission (some browsers require a user gesture).</p>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
