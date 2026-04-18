@@ -214,6 +214,44 @@ html, body {
 }
 .help-inner p { margin: 0 0 12px; }
 .help-inner .faint { color: var(--muted); font-size: 12px; }
+#viz-error {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  background: rgba(24, 14, 10, 0.95);
+  border: 1px solid rgba(232, 122, 106, 0.45);
+  border-radius: 12px;
+  padding: 14px 46px 14px 16px;
+  color: var(--fg);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 720px;
+  margin: 0 auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+#viz-error strong { color: #e87a6a; display: block; margin-bottom: 4px; }
+#viz-error .ve-msg { font-family: ui-monospace, Menlo, monospace; font-size: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word; }
+#viz-error details { margin-top: 4px; }
+#viz-error summary { cursor: pointer; color: var(--muted); font-size: 11px; }
+#viz-error pre {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  background: rgba(0,0,0,0.4);
+  padding: 8px 10px;
+  border-radius: 6px;
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+#viz-error #ve-close {
+  position: absolute; top: 8px; right: 10px;
+  background: transparent; border: 0; color: var(--muted);
+  font-size: 20px; cursor: pointer; padding: 4px 8px;
+}
+
 #ipad-banner {
   position: fixed;
   left: 16px;

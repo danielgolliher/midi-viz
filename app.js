@@ -50,12 +50,35 @@ let vizFailed = null;
     viz = new AbstractViz(canvas);
     console.log('[viz] Three.js engine ready');
   } catch (e) {
-    console.error('[viz] failed to load:', e);
+    console.error('[viz] failed to load:', e, e && e.stack);
     vizFailed = e;
-    // Keep the message up indefinitely so a real failure is visible.
-    setTimeout(() => setOverride(`Visuals failed: ${e.name || 'Error'} — see console`, 'err'), 50);
+    const message = (e && (e.message || e.toString())) || 'unknown error';
+    const firstLine = String(message).split('\n')[0].slice(0, 180);
+    setTimeout(() => {
+      setOverride(`Visuals: ${firstLine}`, 'err');
+      showVizErrorPanel(e);
+    }, 50);
   }
 })();
+
+function showVizErrorPanel(err) {
+  if (document.getElementById('viz-error')) return;
+  const el = document.createElement('div');
+  el.id = 'viz-error';
+  const msg = (err && (err.message || err.toString())) || 'unknown';
+  const stack = (err && err.stack) ? String(err.stack) : '';
+  el.innerHTML = `
+    <div class="ve-inner">
+      <strong>Visual engine failed to load</strong>
+      <div class="ve-msg"></div>
+      <details><summary>Stack trace</summary><pre></pre></details>
+      <button id="ve-close" aria-label="Close">&times;</button>
+    </div>`;
+  el.querySelector('.ve-msg').textContent = msg;
+  el.querySelector('pre').textContent = stack;
+  document.body.appendChild(el);
+  el.querySelector('#ve-close').addEventListener('click', () => el.remove());
+}
 
 // Call on any user gesture so iOS/iPadOS Safari unlocks audio.
 function unlockAudio() { synth.ensure().catch(() => {}); }
