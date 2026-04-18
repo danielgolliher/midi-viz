@@ -38,6 +38,24 @@ const synth = new Synth();
 // Call on any user gesture so iOS/iPadOS Safari unlocks audio.
 function unlockAudio() { synth.ensure().catch(() => {}); }
 
+function showIpadBanner() {
+  let banner = document.getElementById('ipad-banner');
+  if (banner) return;
+  banner = document.createElement('div');
+  banner.id = 'ipad-banner';
+  banner.innerHTML = `
+    <div class="ib-inner">
+      <strong>MIDI can't work in iPad browsers.</strong>
+      Apple has not implemented Web MIDI in Safari, and every other iPad browser uses Safari's engine.
+      Either view this site on a laptop (Chrome / Edge / Safari 18+ on Mac all work), or try the
+      <a href="https://apps.apple.com/us/app/web-midi-browser/id953846217" target="_blank" rel="noopener">Web MIDI Browser</a>
+      app from the App Store — it's an older third-party browser that polyfills MIDI, results may vary.
+      <button id="ib-close" type="button" aria-label="Dismiss">&times;</button>
+    </div>`;
+  document.body.appendChild(banner);
+  banner.querySelector('#ib-close').addEventListener('click', () => banner.remove());
+}
+
 // ---------- Status indicator ----------
 // Base shows MIDI connection state; `override` temporarily replaces it
 // (e.g. painting-load progress) until cleared.
@@ -231,11 +249,12 @@ requestAnimationFrame(tick);
 
 const midi = new MidiInput(onNote);
 
-function isIpadSafari() {
+// Any browser on iPadOS/iOS is ultimately WebKit (Apple forbids other engines).
+// Detecting "iPad at all" is what matters — not whether it's Safari vs. Chrome.
+function isIosWebKit() {
   const ua = navigator.userAgent;
-  const ipadOS = /iPad|iPhone/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-  return ipadOS && safari;
+  const isTouchMac = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return /iPad|iPhone|iPod/.test(ua) || isTouchMac;
 }
 
 function applyDeviceList(snap) {
@@ -249,8 +268,8 @@ function applyDeviceList(snap) {
     setMidiStatus(`${devices.length} MIDI device(s) present but disconnected — check cable/power`, 'warn');
     updateConnectBtn(false);
   } else {
-    const tip = isIpadSafari()
-      ? ' — plug piano in, tap Connect MIDI, then Allow'
+    const tip = isIosWebKit()
+      ? ' — iPad browsers cannot access MIDI (see banner)'
       : ' — QWERTY fallback active';
     setMidiStatus(`No MIDI device detected${tip}`, 'warn');
     updateConnectBtn(false);
@@ -260,10 +279,12 @@ function applyDeviceList(snap) {
 async function connectMidi() {
   unlockAudio();
   if (!navigator.requestMIDIAccess) {
-    const tip = isIpadSafari()
-      ? ' — enable Settings → Safari → Advanced → Feature Flags → Web MIDI API, then reload'
-      : ' — use Chrome, Edge, or Safari 18+';
-    setMidiStatus(`Web MIDI not available in this browser${tip}`, 'err');
+    if (isIosWebKit()) {
+      setMidiStatus('Web MIDI not supported on iPad (Apple limitation)', 'err');
+      showIpadBanner();
+    } else {
+      setMidiStatus('Web MIDI not available — use Chrome, Edge, or Safari 18+ on macOS/PC', 'err');
+    }
     updateConnectBtn(false);
     connectBtn.disabled = true;
     return;

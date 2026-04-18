@@ -214,6 +214,39 @@ html, body {
 }
 .help-inner p { margin: 0 0 12px; }
 .help-inner .faint { color: var(--muted); font-size: 12px; }
+#ipad-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  background: rgba(24, 14, 10, 0.95);
+  border: 1px solid rgba(232, 122, 106, 0.45);
+  border-radius: 12px;
+  padding: 14px 46px 14px 16px;
+  color: var(--fg);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 640px;
+  margin: 0 auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+#ipad-banner a { color: var(--accent); }
+#ipad-banner strong { color: #e87a6a; margin-right: 4px; }
+#ipad-banner #ib-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
 .mood-key { margin: 0 0 12px; padding-left: 18px; }
 .mood-key li { margin-bottom: 4px; }
 .mood-key strong { color: var(--accent); font-weight: 600; }
