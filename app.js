@@ -1,9 +1,10 @@
 import { MidiInput } from './js/midi.js';
 import { KeyboardInput } from './js/keyboard.js';
 import { detectTriad, ArpeggioDetector, PITCH_NAMES } from './js/music.js';
-import { AbstractViz } from './js/abstract.js';
 import { PaintingGallery, moodLabel } from './js/paintings.js';
 import { Synth } from './js/synth.js';
+// AbstractViz is loaded dynamically so Three.js / WebGL failures can't
+// prevent MIDI initialization.
 
 const TRIAD_HOLD_MS = 220;   // hold a triad this long before committing
 const TRIAD_COOLDOWN_MS = 700; // don't re-trigger the same chord quicker than this
@@ -30,10 +31,29 @@ const state = {
   pendingTriadAt: 0,
 };
 
-const viz = new AbstractViz(canvas);
+function makeNoopViz() {
+  return {
+    noteOn() {}, noteOff() {}, onChord() {}, onArpeggio() {}, frame() {}, clear() {},
+  };
+}
+let viz = makeNoopViz();
 const gallery = new PaintingGallery();
 const arp = new ArpeggioDetector();
 const synth = new Synth();
+
+// Load the Three.js visual engine in the background. MIDI will already
+// be running by the time this resolves.
+(async () => {
+  try {
+    const { AbstractViz } = await import('./js/abstract.js');
+    viz = new AbstractViz(canvas);
+    console.log('[viz] Three.js engine ready');
+  } catch (e) {
+    console.error('[viz] failed to load:', e);
+    setOverride('Visuals unavailable — MIDI still works. See console.', 'warn');
+    setTimeout(() => setOverride(null), 5000);
+  }
+})();
 
 // Call on any user gesture so iOS/iPadOS Safari unlocks audio.
 function unlockAudio() { synth.ensure().catch(() => {}); }
